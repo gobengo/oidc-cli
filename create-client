@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+
+# Fail fast
+set -e
+# DEBUG
+# set -x
+
+usage() {
+cat <<-"END"
+Create a Client at an OIDC Provider
+
+Usage:
+  create-client (baseUrl)
+
+Options:
+  -h --help           Show this help.
+  -k --insecure       Pass -k to cURL. Allow insecure SSL  
+
+Patterns:
+  oidc-cli https://accounts.t402.livefyre.com create-client
+END
+}
+
+# http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
+for i in "$@"
+do
+case $i in
+    -h|--help)
+    usage
+    exit
+    ;;
+    -k|--insecure)
+      curl_opts="-k $curl_opts"
+    ;;
+    *)
+      # unknown option
+    ;;
+esac
+done
+
+base_url=$1
+registration_endpoint=/registration
+registration_url=$base_url$registration_endpoint
+
+# https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationRequest
+new_client=$(cat <<'END_HEREDOC'
+{
+ "redirect_uris": ["https://bengo.com/oauth2/redirect"]
+}
+END_HEREDOC)
+
+# get output, append HTTP status code in separate line, discard error message
+HTTP_RES=$(curl $registration_url \
+$curl_opts \
+--silent \
+--write-out '\n%{http_code}' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Cache-Control: no-cache' \
+--data-binary "$new_client" \
+)
+RES_STATUS=$(echo "$HTTP_RES" | tail -n1)
+RES_BODY=$(echo "$HTTP_RES" | sed '$d')
+
+if [[ "$RES_STATUS" -ne "200" ]]; then
+  >&2 echo "Create Client API Request Failed with Status $RES_STATUS"
+  echo $RES_BODY
+  exit 1
+fi
+
+# Print the new client
+echo $RES_BODY
+
+exit 0

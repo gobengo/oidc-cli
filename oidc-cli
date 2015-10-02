@@ -29,41 +29,20 @@ case $i in
     usage
     exit
     ;;
-    -a=*|--auth=*)
-      Authorization="${i#*=}"
-      shift # past argument=value
-    ;;
-    -n=*|--networkName=*)
-      networkName="${i#*=}"
-      shift # past argument=value
-    ;;
-    -k|--insecure)
-      curl_opts="-k $curl_opts"
-    ;;
-    *)
-      # unknown option
-    ;;
+    # -a=*|--auth=*)
+    #   Authorization="${i#*=}"
+    #   shift # past argument=value
+    # ;;
+    # -k|--insecure)
+    #   curl_opts="-k $curl_opts"
+    # ;;
+    # *)
+    #   # unknown option
+    # ;;
 esac
 done
 
 base_url=$1
-registration_endpoint=/registration
-registration_url=$base_url$registration_endpoint
-
-# # Read asset text from stdin
-# input_txt=$(while read line
-# do
-#   echo $line
-# done < "${hi:-/dev/stdin}"
-# )
-
-# https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationRequest
-new_client=$(cat <<'END_HEREDOC'
-{
- "redirect_uris": ["https://bengo.com/oauth2/redirect"]
-}
-END_HEREDOC)
-
 
 command=$2
 if [[ $command != "create-client" ]]; then
@@ -72,26 +51,4 @@ if [[ $command != "create-client" ]]; then
   exit 1
 fi
 
-# get output, append HTTP status code in separate line, discard error message
-HTTP_RES=$(curl $registration_url \
-$curl_opts \
---silent \
---write-out '\n%{http_code}' \
--H 'Content-Type: application/json' \
--H 'Accept: application/json' \
--H 'Cache-Control: no-cache' \
---data-binary "$new_client" \
-)
-RES_STATUS=$(echo "$HTTP_RES" | tail -n1)
-RES_BODY=$(echo "$HTTP_RES" | sed '$d')
-
-if [[ "$RES_STATUS" -ne "200" ]]; then
-  >&2 echo "Create Client API Request Failed with Status $RES_STATUS"
-  echo $RES_BODY
-  exit 1
-fi
-
-# Print the new client
-echo $RES_BODY
-
-exit 0
+./create-client "$@"
