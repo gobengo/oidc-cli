@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-# set -e
+# Fail fast
+set -e
 # DEBUG
 # set -x
 
@@ -13,7 +14,7 @@ Usage:
 
 Options:
   -h --help           Show this help.
-  -a --auth           Provide an Authorization header (e.g. "lftoken MY_TOKEN")
+  -k --insecure       Pass -k to cURL. Allow insecure SSL  
 
 Patterns:
   oidc-cli https://accounts.t402.livefyre.com create-client
@@ -27,7 +28,6 @@ case $i in
     -h|--help)
     usage
     exit
-    shift # past argument=value
     ;;
     -a=*|--auth=*)
       Authorization="${i#*=}"
@@ -36,6 +36,9 @@ case $i in
     -n=*|--networkName=*)
       networkName="${i#*=}"
       shift # past argument=value
+    ;;
+    -k|--insecure)
+      curl_opts="-k $curl_opts"
     ;;
     *)
       # unknown option
@@ -61,6 +64,7 @@ new_client=$(cat <<'END_HEREDOC'
 }
 END_HEREDOC)
 
+
 command=$2
 if [[ $command != "create-client" ]]; then
   >&2 echo "Only supported command is create-client, but you provided $command"
@@ -70,6 +74,7 @@ fi
 
 # get output, append HTTP status code in separate line, discard error message
 HTTP_RES=$(curl $registration_url \
+$curl_opts \
 --silent \
 --write-out '\n%{http_code}' \
 -H 'Content-Type: application/json' \
