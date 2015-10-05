@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Fail fast
-set -e
+# set -e
 # DEBUG
 # set -x
 
@@ -13,6 +13,7 @@ Usage:
   create-client (baseUrl)
 
 Options:
+  -s --save           Also save the client on the filesystem for later
   -h --help           Show this help.
   -k --insecure       Pass -k to cURL. Allow insecure SSL  
 
@@ -28,6 +29,9 @@ case $i in
     -h|--help)
     usage
     exit
+    ;;
+    -s|--save)
+      save_client=1
     ;;
     -k|--insecure)
       curl_opts="-k $curl_opts"
@@ -64,9 +68,16 @@ RES_BODY=$(echo "$HTTP_RES" | sed '$d')
 
 if [[ "$RES_STATUS" -ne "200" ]]; then
   >&2 echo "Create Client API Request Failed with Status $RES_STATUS"
-  echo $RES_BODY
+  >&2 echo "$RES_BODY"
   exit 1
 fi
+
+# Save the client
+if [[ $save_client ]]; then
+  this_script=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)/`basename "${BASH_SOURCE[0]}"`
+  this_dir=$(dirname $this_script)
+  echo $RES_BODY | $this_dir/save-client $base_url >&2
+fi;
 
 # Print the new client
 echo $RES_BODY

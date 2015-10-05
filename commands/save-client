@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+
+# Fail fast
+set -e
+# DEBUG
+# set -x
+
+usage() {
+cat <<-"END"
+Save a Client JSON on the filesystem.
+Stores files like ./clients/{op_host}/{client_id}
+Files are JSON
+
+Usage:
+  save-client (baseUrl)
+
+Options:
+  -h --help           Show this help.
+
+Patterns:
+  echo $client | oidc-cli https://accounts.t402.livefyre.com save-client
+END
+}
+
+# http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
+for i in "$@"
+do
+case $i in
+    -h|--help)
+    usage
+    exit
+    ;;
+    *)
+      # unknown option
+    ;;
+esac
+done
+
+this_script=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)/`basename "${BASH_SOURCE[0]}"`
+this_dir=$(dirname $this_script)
+oidc_dir=$(dirname $this_dir)
+clients_dir=$oidc_dir/clients
+base_url=$1
+
+if [[ "$base_url" == "" ]]; then
+  echo "Error: Provide an OP Base URL"
+  echo
+  usage
+  exit 1
+fi
+
+# extract the protocol
+proto="$(echo $base_url | grep :// | sed -e's,^\(.*://\).*,\1,g')"
+# remove the protocol
+op_host="$(echo ${base_url/$proto/})"
+op_clients_dir=$clients_dir/$op_host
+
+stdin_file="/dev/stdin"
+
+new_client_tmp=/tmp/$(uuid)
+new_client=$(cat $stdin_file)
+new_client_id=$(echo $new_client | jq '.client_id' -r)
+mkdir -p $op_clients_dir
+new_client_path=$op_clients_dir/$new_client_id
+echo $new_client > $new_client_path
+echo $new_client_path
+
+exit 0

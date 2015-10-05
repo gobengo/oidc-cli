@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+this_script=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)/`basename "${BASH_SOURCE[0]}"`
+this_dir=$(dirname $this_script)
+$this_dir/list-clients $@

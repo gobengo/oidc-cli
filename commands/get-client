@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+# Fail fast
+set -e
+# DEBUG
+# set -x
+
+usage() {
+cat <<-"END"
+Get a Client for an OIDC OP
+
+Usage:
+  get-client (baseUrl)
+
+Options:
+  -h --help           Show this help.
+
+Patterns:
+  get-client "https://accounts.fy.re"
+END
+}
+
+# http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
+for i in "$@"
+do
+case $i in
+    -h|--help)
+    usage
+    exit
+    ;;
+    *)
+      # unknown option
+    ;;
+esac
+done
+
+base_url=$1
+if [[ $base_url == "" ]]; then
+  echo "Provide an OP Base URL"
+  echo
+  usage
+  exit 1
+fi
+
+this_script=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)/`basename "${BASH_SOURCE[0]}"`
+this_dir=$(dirname $this_script)
+$this_dir/list-clients $base_url | head -1 | xargs cat
+
+exit 0
