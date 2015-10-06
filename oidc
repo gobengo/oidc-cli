@@ -12,6 +12,7 @@ Operate an OpenID Connect Provider
 Usage:
   oidc-cli (baseUrl) create-client
   oidc-cli (baseUrl) save-client
+  oidc-cli (baseUrl) configuration
   oidc-cli [baseUrl] list-clients
 
 Options:
@@ -50,7 +51,7 @@ done
 base_url=$1
 command=$2
 
-commands=(create-client get-client list-clients save-client ls)
+commands=(create-client get-client list-clients save-client ls configuration)
 
 if [[ " ${commands[@]} " =~ " ${base_url} " ]]; then
   command=$base_url

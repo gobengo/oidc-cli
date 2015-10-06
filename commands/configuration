@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+
+# Fail fast
+# set -e
+# DEBUG
+# set -x
+
+usage() {
+cat <<-"END"
+Get Configuration for an OIDC Provider
+
+Usage:
+  configuration (baseUrl)
+
+Options:
+  -h --help           Show this help.
+  -k --insecure       Pass -k to cURL. Allow insecure SSL  
+
+Patterns:
+  configuration https://accounts.t402.livefyre.com create-client
+END
+}
+
+# http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
+for i in "$@"
+do
+case $i in
+    -h|--help)
+    usage
+    exit
+    ;;
+    -k|--insecure)
+      curl_opts="-k $curl_opts"
+    ;;
+    *)
+      # unknown option
+    ;;
+esac
+done
+
+base_url=$1
+configuration_path=/.well-known/openid-configuration
+configuration_url=$base_url$configuration_path
+
+# get output, append HTTP status code in separate line, discard error message
+HTTP_RES=$(curl $configuration_url \
+$curl_opts \
+--silent \
+--write-out '\n%{http_code}' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Cache-Control: no-cache' \
+--data-binary "$new_client" \
+)
+RES_STATUS=$(echo "$HTTP_RES" | tail -n1)
+RES_BODY=$(echo "$HTTP_RES" | sed '$d')
+
+if [[ "$RES_STATUS" -ne "200" ]]; then
+  >&2 echo "Configuration Request Failed with Status $RES_STATUS"
+  >&2 echo "$RES_BODY"
+  exit 1
+fi
+
+# Print the new client
+echo $RES_BODY
+
+exit 0
