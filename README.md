@@ -8,19 +8,25 @@ A CLI for interacting with an [OpenID Connect](http://openid.net/connect/) provi
 Operate an OpenID Connect Provider
 
 Usage:
-  oidc (baseUrl) create-client
-  oidc (baseUrl) save-client
-  oidc [baseUrl] list-clients
+  oidc-cli (baseUrl) create-client
+  oidc-cli (baseUrl) save-client
+  oidc-cli (baseUrl) configuration
+  oidc-cli [baseUrl] list-clients
+  oidc-cli client --redirect-uri "http://localhost:3000" --response-type code
 
 Options:
   -h --help           Show this help.
-  -k --insecure       Pass -k to cURL. Allow insecure SSL  
+  -k --insecure       Pass -k to cURL. Allow insecure SSL
 
 Patterns:
-  oidc https://accounts.t402.livefyre.com create-client
-  oidc https://accounts.t402.livefyre.com create-client --save
-  oidc list-clients
-  oidc https://accounts.t402.livefyre.com list-clients
+  op=https://accounts.livefyre.com
+  oidc-cli $op create-client
+  oidc-cli $op create-client --save
+  oidc-cli list-clients
+  oidc-cli $op list-clients
+  oidc client --redirect-uri "http://localhost:3000" --response-type code \
+    | oidc $op create-client
+
 ```
 
 ## Usage

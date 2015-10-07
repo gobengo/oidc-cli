@@ -50,7 +50,6 @@ $curl_opts \
 -H 'Content-Type: application/json' \
 -H 'Accept: application/json' \
 -H 'Cache-Control: no-cache' \
---data-binary "$new_client" \
 )
 RES_STATUS=$(echo "$HTTP_RES" | tail -n1)
 RES_BODY=$(echo "$HTTP_RES" | sed '$d')

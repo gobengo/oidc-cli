@@ -14,16 +14,20 @@ Usage:
   oidc-cli (baseUrl) save-client
   oidc-cli (baseUrl) configuration
   oidc-cli [baseUrl] list-clients
+  oidc-cli client --redirect-uri "http://localhost:3000" --response-type code
 
 Options:
   -h --help           Show this help.
   -k --insecure       Pass -k to cURL. Allow insecure SSL  
 
 Patterns:
-  oidc-cli https://accounts.t402.livefyre.com create-client
-  oidc-cli https://accounts.t402.livefyre.com create-client --save
+  op=https://accounts.livefyre.com
+  oidc-cli $op create-client
+  oidc-cli $op create-client --save
   oidc-cli list-clients
-  oidc-cli https://accounts.t402.livefyre.com list-clients
+  oidc-cli $op list-clients
+  oidc client --redirect-uri "http://localhost:3000" --response-type code \
+    | oidc $op create-client
 END
 }
 
@@ -51,7 +55,7 @@ done
 base_url=$1
 command=$2
 
-commands=(create-client get-client list-clients save-client ls configuration)
+commands=(create-client get-client list-clients save-client ls configuration client)
 
 if [[ " ${commands[@]} " =~ " ${base_url} " ]]; then
   command=$base_url

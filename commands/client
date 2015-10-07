@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+
+# Fail fast
+set -e
+# DEBUG
+# set -x
+
+usage() {
+cat <<-"END"
+Generate a Client JSON object that can be registered with an OIDC Provider
+
+Usage:
+  client
+
+Options:
+  -h --help           Show this help.
+  --redirect-uri      Add to .redirect_uris
+  --response-type     Add to .respones_types
+  --application-type  Set .application_type to web (default) or native
+  --contact           An email address that can be used to contact the dev
+
+Patterns:
+  client --redirect-uri "http://localhost:3000" --response-type code
+
+END
+}
+
+contacts=()
+redirect_uris=()
+response_types=()
+application_type='web'
+
+# http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
+for i in "$@"
+do
+case $i in
+    -h|--help)
+    usage
+    exit
+    ;;
+    --application-type)
+    shift
+    application_type=($1)
+    shift # past argument
+    ;;
+    --redirect-uri)
+    shift
+    redirect_uris+=($1)
+    shift # past argument
+    ;;
+    --response-type)
+    shift
+    response_types+=($1)
+    shift # past argument
+    ;;
+    --contact)
+    shift
+    contacts+=($1)
+    shift # past argument
+    ;;
+    *)
+      # unknown option
+    ;;
+esac
+done
+
+this_script=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)/`basename "${BASH_SOURCE[0]}"`
+this_dir=$(dirname $this_script)
+oidc_dir=$(dirname $this_dir)
+
+stdin_file="/dev/stdin"
+
+# https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationRequest
+new_client=$(cat <<'END_HEREDOC'
+{
+  "application_type": "web",
+  "redirect_uris": [],
+  "response_types": ["code"]
+}
+END_HEREDOC)
+
+# Add application_type
+new_client=$(echo $new_client | jq --arg a $application_type '.application_type=$a')
+# Add redirect_uris
+redirect_uris_json=$(jq -n -c -M --arg redirect_uris "$(echo "${redirect_uris[*]}")" ' ($redirect_uris|split(" ")) ')
+new_client=$(echo $new_client | jq ".redirect_uris=$redirect_uris_json")
+# Add response_types
+response_types_json=$(jq -n -c -M --arg response_types "$(echo "${response_types[*]}")" ' ($response_types|split(" ")) ')
+new_client=$(echo $new_client | jq ".response_types=$response_types_json")
+# Add contacts
+contacts_json=$(jq -n -c -M --arg contacts "$(echo "${contacts[*]}")" ' ($contacts|split(" ")) ')
+new_client=$(echo $new_client | jq ".contacts=$contacts_json")
+
+echo $new_client
+exit 0

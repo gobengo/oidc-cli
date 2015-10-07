@@ -22,6 +22,9 @@ Patterns:
 END
 }
 
+this_script=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)/`basename "${BASH_SOURCE[0]}"`
+this_dir=$(dirname $this_script)
+
 # http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
 for i in "$@"
 do
@@ -46,12 +49,19 @@ base_url=$1
 registration_endpoint=/registration
 registration_url=$base_url$registration_endpoint
 
-# https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationRequest
-new_client=$(cat <<'END_HEREDOC'
-{
- "redirect_uris": ["https://bengo.com/oauth2/redirect"]
-}
-END_HEREDOC)
+# If stdin, use it for new client definition
+if [ -t 0 ]; then
+    new_client=$($this_dir/gen-client)
+else
+    # if no stdin, generate a basic client
+    new_client=$(while read -r line ; do
+        echo $line
+    done)
+fi
+
+>&2 echo "Registering Client:"
+>&2 echo "$new_client"
+>&2 echo
 
 # get output, append HTTP status code in separate line, discard error message
 HTTP_RES=$(curl $registration_url \
@@ -74,8 +84,6 @@ fi
 
 # Save the client
 if [[ $save_client ]]; then
-  this_script=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)/`basename "${BASH_SOURCE[0]}"`
-  this_dir=$(dirname $this_script)
   echo $RES_BODY | $this_dir/save-client $base_url >&2
 fi;
 
