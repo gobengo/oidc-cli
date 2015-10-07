@@ -41,7 +41,7 @@ clients_dir=$oidc_root_dir/clients
 base_url=$1
 
 if [[ "$base_url" == "" ]]; then
-  find $clients_dir -mindepth 2 -maxdepth 2
+  ls -lt $(find $clients_dir -type f) | awk '{ print $9 }'
   exit
 fi
 
@@ -51,6 +51,6 @@ proto="$(echo $base_url | grep :// | sed -e's,^\(.*://\).*,\1,g')"
 op_host="$(echo ${base_url/$proto/})"
 op_clients_dir=$clients_dir/$op_host
 
-find $op_clients_dir -mindepth 1 -maxdepth 1
+ls -lt $op_clients_dir/* | awk '{ print $9 }'
 
 exit 0
